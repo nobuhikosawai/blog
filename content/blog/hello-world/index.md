@@ -1,21 +1,14 @@
 ---
 title: Hello World
-date: '2015-05-01T22:12:03.284Z'
+date: '2019-01-02'
 ---
 
-This is my first post on my new fake blog! How exciting!
+ブログを作ろうと思ったのはn(>=100）度目なのだけど、個人が実験できる場所がほしいよねとかねがね思っていたので、年末年始の時間をつかってようやく組み立てた。
 
-I'm sure I'll write a lot more interesting things in the future.
+あと普段React書いたりするので、[gatsbyjs](https://www.gatsbyjs.org)使ってみたかったとか、[Netlify](https://www.netlify.com/)使ってみたかったとかある。
 
-Oh, and here's a great quote from this Wikipedia on
-[salted duck eggs](http://en.wikipedia.org/wiki/Salted_duck_egg).
+セットアップの知見でもと思ったのだけど、もはや何もかもが割とビルトインで用意されているのでほとんど書くことがなかった。ドメインもとったのだけど、今はNetlify上で購入もできるので、ハマりどころがないというか、下手なブログサービスでアカウント登録して始めるより楽な説まである。
 
-> A salted duck egg is a Chinese preserved food product made by soaking duck
-> eggs in brine, or packing each egg in damp, salted charcoal. In Asian
-> supermarkets, these eggs are sometimes sold covered in a thick layer of salted
-> charcoal paste. The eggs may also be sold with the salted paste removed,
-> wrapped in plastic, and vacuum packed. From the salt curing process, the
-> salted duck eggs have a briny aroma, a gelatin-like egg white and a
-> firm-textured, round yolk that is bright orange-red in color.
+[github上で管理されている](https://github.com/nobuhikosawai/blog)ので自由にマサカリを投げてほしい。
 
-![Chinese Salty Egg](./salty_egg.jpg)
+まあちょっとだれに気兼ねすることもなく、色々実験しつつ大してまとまってないoutputを吐き出すことができる場所として作ったので、こちょこちょ育てていきたい。
