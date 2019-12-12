@@ -1,0 +1,18 @@
+---
+title: mdxに変更しました
+date: '2019-12-13'
+---
+
+もともと[gatsby-starter-blog](https://github.com/gatsbyjs/gatsby-starter-blog)という
+gatsbyが公式に提供しているtemplateを使ってblogを始めていたのだけど、speakerdeckをiframeで埋め込もうとしたらremarkがいい感じにsanitizeしてくれるのでiframeが入れられなかった[^1]
+のと、類似のケースで[videoを埋め込む方法](https://www.gatsbyjs.org/docs/working-with-video/#writing-custom-components-for-hosted-video)について調べていると、
+よりカスタマイズして使う場合はmdxが勧められていたのでmdxを使えるようにした。
+
+公式にgatsby-starter-blogにbundleされているわけではないが、[こちらのblog post](https://www.gatsbyjs.org/blog/2019-11-21-how-to-convert-an-existing-gatsby-blog-to-use-mdx/)
+に方法が書いてあるので、この通りに順番に入れていけば大丈夫。blogの内部で言及されているPRでも[コメント](https://github.com/gatsbyjs/gatsby/pull/19580#issuecomment-557534847)されているが、
+本家はなるべくシンプルに保つということで、mdxを使うためのドキュメントは提供するけどデフォルトでmdxをサポートすることはしないよう。
+
+ちょうど本業でそれってmarkdownでカスタムなcompoenentを定義したいって話だよね、みたいなmdxっぽい話があったりしてタイムリーだったり、もとから興味あったけど使って見れてなかったので
+ちょうどよいタイミングだったりもする👍
+
+[^1]: [gatsby-remark-responsive-iframe](https://www.gatsbyjs.org/packages/gatsby-remark-responsive-iframe/)を使えば入れられるのだが、src, width, height以外の設定ができずスタイルのカスタマイズなどができないので、mdxにすることにした。
