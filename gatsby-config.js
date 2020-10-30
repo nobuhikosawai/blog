@@ -9,6 +9,7 @@ module.exports = {
     },
   },
   plugins: [
+    `gatsby-remark-images`,
     {
       resolve: `gatsby-source-filesystem`,
       options: {
