@@ -127,8 +127,12 @@ repositoriesで定義されたインタフェースに沿う実際の実装が�
 
 ### entities
 
-ドメインモデルが格納されます。レポジトリはリソースを返すのでここで定義されているモデルが返ります。
-アプリの状態をイミュータブルにするために Freezed を使っています。
+サービスとして行うべきビジネスルールをカプセル化したものです。
+アプリで実装されているかどうかに関わらず、サービスとして提供する一連の操作を実装したものになります。
+最も中核のレイヤーとなるので、他のレイヤーとの依存を持ちません。
+
+レポジトリが返すリソースはここで定義されているドメインモデルをそのまま返すことを想定しています。
+アプリの状態管理をイミュータブルにするために Freezed を使っています。
 
 ## ui ディレクトリ
 
@@ -166,7 +170,7 @@ UI Widet は StateNotifierProvider を経由して、Controller(StateNotifier)�
 
 メインの画面であるTodoの画面を例に今回作成したアプリがどのように実装しているかについて説明します。
 
-## Data fetching
+## Data fetchingレイヤー
 
 データ取得側のレイヤーについてまとめます。先述の通り、レポジトリパターンを採用しています。
 
@@ -192,6 +196,85 @@ abstract class TodoRepository {
   Future<void> deleteTodo({required String id});
 }
 ```
+レポジトリの実装は別途 `TodoRepositoryImpl`として定義されています。
+
+```dart
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
+
+import '../entities/todo.dart';
+import '../entities/todos.dart';
+import '../repositories/todo_repository.dart';
+
+class TodoRepositoryImpl extends TodoRepository {
+  TodoRepositoryImpl() {
+    _firestore = FirebaseFirestore.instance;
+  }
+
+  late FirebaseFirestore _firestore;
+
+  @override
+  Stream<Todos> listTodos({required String meId}) {
+    return _firestore
+        .collection('todos')
+        .where('auth_id', isEqualTo: meId)
+        .orderBy('position', descending: true)
+        .snapshots()
+        .asyncExpand<Todos>((event) async* {
+      final todoList = event.docs.map((d) {
+        return Todo(
+          id: d.id,
+          title: d['title'] as String,
+          completed: d['completed'] as bool,
+          position: (d['position'] as num).toDouble(),
+          // This is a workaround because updatedAt is changed by updateTodo method with
+          // ServerTimestamp, updateAt can be null during update.
+          // There is a way to use serverTimestampBehavior of SnapshotOptions for
+          // other platform such as iOS and android so this should be fix to flutter
+          // any time soon. Meanwhile the workaround is used.
+          createdAt: d['created_at'] == null
+              ? DateTime.now()
+              : (d['created_at'] as Timestamp).toDate(),
+          updatedAt: d['updated_at'] == null
+              ? DateTime.now()
+              : (d['updated_at'] as Timestamp).toDate(),
+        );
+      }).toList();
+
+      final uncompletedItems =
+          todoList.where((item) => !item.completed).toList();
+      final completedItems = todoList.where((item) => item.completed).toList();
+
+      completedItems.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+      yield Todos(
+          uncompletedItems: uncompletedItems, completedItems: completedItems);
+    });
+  }
+
+  @override
+  Future<Todo> createTodo(
+      {required String meId,
+      required String title,
+      required double position}) async {
+    ...
+  }
+
+  @override
+  Future<void> updateTodo(
+      {required String id,
+      String? title,
+      bool? completed,
+      double? position}) async {
+    ...
+  }
+
+  @override
+  Future<void> deleteTodo({required String id}) async {
+    await _firestore.collection('todos').doc(id).delete();
+  }
+}
+```
 
 レポジトリは取得したリソースとしてentityのインスタンスを返します。entityは別で `Todo`と`Todos`として定義されています。単一のTodoモデルと配列を扱うファーストクラスコレクションとしてのTodosモデルの2つを定義しています。immutableになるようにFreezedを用いています。entityは以下のように定義されています。
 
@@ -214,7 +297,7 @@ abstract class Todo with _$Todo {
 }
 ```
 
-Todosの方はインターフェースの定義に加えて、コレクションの操作などアプリのメインとなる操作に関するビジネスロジックが含まれています。
+Todosの方はインターフェースの定義に加えて、コレクションの操作などアプリのビジネスルールとなるtodoの操作に関するロジックが含まれています。
 
 ```dart
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -305,87 +388,6 @@ abstract class Todos implements _$Todos {
 }
 
 ```
-
-レポジトリの実装は別途 `TodoRepositoryImpl`として定義されています。
-
-```dart
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
-
-import '../entities/todo.dart';
-import '../entities/todos.dart';
-import '../repositories/todo_repository.dart';
-
-class TodoRepositoryImpl extends TodoRepository {
-  TodoRepositoryImpl() {
-    _firestore = FirebaseFirestore.instance;
-  }
-
-  late FirebaseFirestore _firestore;
-
-  @override
-  Stream<Todos> listTodos({required String meId}) {
-    return _firestore
-        .collection('todos')
-        .where('auth_id', isEqualTo: meId)
-        .orderBy('position', descending: true)
-        .snapshots()
-        .asyncExpand<Todos>((event) async* {
-      final todoList = event.docs.map((d) {
-        return Todo(
-          id: d.id,
-          title: d['title'] as String,
-          completed: d['completed'] as bool,
-          position: (d['position'] as num).toDouble(),
-          // This is a workaround because updatedAt is changed by updateTodo method with
-          // ServerTimestamp, updateAt can be null during update.
-          // There is a way to use serverTimestampBehavior of SnapshotOptions for
-          // other platform such as iOS and android so this should be fix to flutter
-          // any time soon. Meanwhile the workaround is used.
-          createdAt: d['created_at'] == null
-              ? DateTime.now()
-              : (d['created_at'] as Timestamp).toDate(),
-          updatedAt: d['updated_at'] == null
-              ? DateTime.now()
-              : (d['updated_at'] as Timestamp).toDate(),
-        );
-      }).toList();
-
-      final uncompletedItems =
-          todoList.where((item) => !item.completed).toList();
-      final completedItems = todoList.where((item) => item.completed).toList();
-
-      completedItems.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-
-      yield Todos(
-          uncompletedItems: uncompletedItems, completedItems: completedItems);
-    });
-  }
-
-  @override
-  Future<Todo> createTodo(
-      {required String meId,
-      required String title,
-      required double position}) async {
-    ...
-  }
-
-  @override
-  Future<void> updateTodo(
-      {required String id,
-      String? title,
-      bool? completed,
-      double? position}) async {
-    ...
-  }
-
-  @override
-  Future<void> deleteTodo({required String id}) async {
-    await _firestore.collection('todos').doc(id).delete();
-  }
-}
-```
-
 定義したRepositoryの受け渡しにはProviderを使ってDIをしています。Providerの実装は`todoRepositoryProvider`として定義されており、以下のような実装になっています。
 
 ```dart
@@ -396,7 +398,7 @@ import '../datastores/todo_repository_impl.dart';
 final todoRepositoryProvider = Provider((ref) => TodoRepositoryImpl());
 ```
 
-## UI
+## Presentation レイヤー
 
 マップのメインの画面は`TodoScreen`として定義されています。
 
@@ -441,6 +443,7 @@ StateNotifierProiderについては公式のドキュメントの他に[こち�
 
 stateを返すController(StateNotifier)側の実装は以下のようなイメージです。
 状態の取得と更新に関するメソッドが定義されています。
+それぞれのメソッドの中ではentityのメソッドを呼び出し、状態の更新を行ったり、バックエンドサーバーとの通信を行っています。
 
 ```dart
 import 'package:riverpod/riverpod.dart';
@@ -585,6 +588,49 @@ final todos = useProvider(todoProvider(meId));
 final accidentResult = useProvider(accidentProvider(meId));
 ```
 
+Todoの作成など状態の更新時はcontrollerのメソッドを呼び出します。
+以下のようなコードイメージです。
+
+```dart
+class TodoScreen extends HookWidget {
+  @override
+  Widget build(BuildContext context) {
+    ...
+    // controllerを取得
+    final todoController = useProvider(todoProvider(meId).notifier);
+
+    return todos.when(
+      data: (todos) {
+         return Scaffold(
+          ...
+          floatingActionButton: FloatingActionButton(
+            backgroundColor: Theme.of(context).primaryColor,
+            onPressed: () {
+              showModalBottomSheet<void>(
+                  context: context,
+                  builder: (buildContext) {
+                    return SingleChildScrollView(
+                        child: Container(
+                            child: Wrap(
+                      children: [
+                        TodoInputForm(
+                           // controllerのメソッド呼び出し
+                            onSaved: (str) =>
+                                todoController.createTodo(str)),
+                      ],
+                    )));
+                  });
+            },
+            child: Icon(Icons.add),
+          ),
+         )
+        ...
+      }
+    );
+  }
+}
+```
+
 画面全体の実装イメージは以下のような感じになります。
 
 ```dart
@@ -674,6 +720,9 @@ App State以外の箇所でもFlutter Hooksを使っていて、画面で一時�
 上記で解説したような状態管理手法のキャッチアップには、各ライブラリの公式ドキュメントやexampleを見るのが一番参考になりました。
 
 Hooksについてはライブラリの作者が React を参考にしているため、[React Hooksのドキュメント](https://ja.reactjs.org/docs/hooks-intro.html)を参考にするのがよいです。
+
+書いてから気づいたのですが、Riverpodを使ったTodoアプリのサンプルコードの例は割とちょこちょこネットでもあって、割とオーソドックスになりつつあるのかもしれません。
+サンプルコードだとAPI呼び出しをしている例があまり多くなかったり、ライブラリの組み合わせが少し違ったりもするので、そのあたりでなにか参考になればと思います。
 
 また、これ以外にもアプリの設計は色んなパターンがありえてこれ以外の例だと
 
