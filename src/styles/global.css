@@ -1,5 +1,5 @@
-code[class*="language-"] {
-  font-size: .9em;
+code[class*='language-'] {
+  font-size: 0.9em;
 }
 
 .gatsby-code-title {
@@ -18,6 +18,28 @@ code[class*="language-"] {
   border-top-right-radius: 0.3em;
 }
 
-.gatsby-code-title + .gatsby-highlight > pre[class*="language-"] {
-  border-radius: 0 0 .3em .3em;
+.gatsby-code-title + .gatsby-highlight > pre[class*='language-'] {
+  border-radius: 0 0 0.3em 0.3em;
+}
+
+/* gatsby-remark-autolink-headers */
+.anchor {
+  box-shadow: none;
+  margin: 0 4px 0 -20px;
+}
+h1 .anchor > svg,
+h2 .anchor > svg,
+h3 .anchor > svg,
+h4 .anchor > svg,
+h5 .anchor > svg,
+h6 .anchor > svg {
+  visibility: hidden;
+}
+h1:hover .anchor > svg,
+h2:hover .anchor > svg,
+h3:hover .anchor > svg,
+h4:hover .anchor > svg,
+h5:hover .anchor > svg,
+h6:hover .anchor > svg {
+  visibility: visible;
 }
