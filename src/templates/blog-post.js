@@ -114,6 +114,9 @@ const BlogPostTemplate = (props) => {
   const post = props.data.mdx
   const siteTitle = props.data.site.siteMetadata.title
   const { previous, next } = props.pageContext
+  const { tableOfContents } = post;
+
+  const hasTableOfContents = tableOfContents && Object.keys(tableOfContents).length > 0
 
   const tocButtonEl = useRef(null);
   const [displayToc, setDisplayToc] = useState(false);
@@ -133,14 +136,19 @@ const BlogPostTemplate = (props) => {
         >
           {post.frontmatter.date}
         </p>
-        <button css={tocButton} ref={tocButtonEl} onClick={() => setDisplayToc(!displayToc)}>
-          目次
-        </button>
-        { displayToc &&
-            ReactDOM.createPortal(
-              <TocModal tableOfContents={post.tableOfContents} closeFunc={() => setDisplayToc(false)} />,
-              tocButtonEl.current,
-            )
+        {
+          hasTableOfContents &&
+          <>
+            <button css={tocButton} ref={tocButtonEl} onClick={() => setDisplayToc(!displayToc)}>
+              目次
+            </button>
+            { displayToc &&
+                ReactDOM.createPortal(
+                  <TocModal tableOfContents={post.tableOfContents} closeFunc={() => setDisplayToc(false)} />,
+                  tocButtonEl.current,
+                )
+            }
+          </>
         }
         <MDXRenderer>{post.body}</MDXRenderer>
         <hr
@@ -177,7 +185,7 @@ const BlogPostTemplate = (props) => {
       </Layout>
       <aside>
         <div css={navigation}>
-          <Toc tableOfContents={post.tableOfContents} />
+          <Toc tableOfContents={tableOfContents} />
         </div>
       </aside>
     </div>

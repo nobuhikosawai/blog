@@ -75,7 +75,7 @@ const Toc = (props) => {
   const { tableOfContents } = props;
   const { items } = tableOfContents;
   
-  if (!items) { return; }
+  if (!items) { return null; }
 
   return(
     <nav css={root}>
