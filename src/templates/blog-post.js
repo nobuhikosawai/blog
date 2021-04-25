@@ -1,4 +1,5 @@
-import React from 'react'
+import React, { useState, useRef } from 'react'
+import ReactDOM from 'react-dom'
 import { Link, graphql } from 'gatsby'
 import { MDXRenderer } from "gatsby-plugin-mdx"
 import { css } from '@emotion/core';
@@ -26,10 +27,96 @@ const navigation = css`
   }
 `;
 
+const tocButton = css`
+  display: block;
+  position: relative;
+  cursor: pointer;
+  margin-bottom: ${rhythm(1)};
+  border: none;
+  border-radius: 4px;
+  background: lightgray;
+  padding: 4px 8px;
+  @media (min-width: 1024px) {
+    display: none;
+  }
+  &:hover, &:active{
+    background: gray;
+  }
+  &:active {
+    color: inherit;
+  }
+`;
+
+const tocModal = css`
+  position: absolute;
+  top: 100%;
+  left: 20px;
+  padding-top: 20px;
+  z-index: 100;
+`;
+
+const tocModalContent = css`
+  background: white;
+  border: 1px solid lightgray;
+  box-shadow: rgb(116 129 141 / 10%) 0px 3px 8px 0px;
+  border-radius: 8px;
+  max-width: 300px;
+  min-width: 260px;
+  text-align: left;
+  &::before {
+    content: "";
+    position: absolute;
+    top: 5px;
+    left: 8px;
+    border: 8px solid transparent;
+    border-bottom: 8px solid lightgray;
+  }
+  &::after {
+    content: "";
+    position: absolute;
+    top: 7px;
+    left: 9px;
+    border: 7px solid transparent;
+    border-bottom: 7px solid white;
+  }
+`;
+
+const TocModal = (props) => {
+  const { tableOfContents, closeFunc } = props;
+
+  const isEventFromAnchorlink = (event) => {
+    return event.target.tagName.toLowerCase() === 'a';
+  }
+
+  const overlay = css`
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: transparent;
+    z-index: 1;
+  `;
+
+  return (
+    <>
+      <div css={overlay} onClick={(e) => { e.stopPropagation(); closeFunc() }} />
+      <div css={tocModal} onClick={(e) => { e.stopPropagation(); isEventFromAnchorlink(e) && closeFunc(); }}>
+        <div css={tocModalContent}>
+          <Toc tableOfContents={tableOfContents} />
+        </div>
+      </div>
+    </>
+  );
+}
+
 const BlogPostTemplate = (props) => {
   const post = props.data.mdx
   const siteTitle = props.data.site.siteMetadata.title
   const { previous, next } = props.pageContext
+
+  const tocButtonEl = useRef(null);
+  const [displayToc, setDisplayToc] = useState(false);
 
   return (
     <div css={wrapper}>
@@ -46,6 +133,15 @@ const BlogPostTemplate = (props) => {
         >
           {post.frontmatter.date}
         </p>
+        <button css={tocButton} ref={tocButtonEl} onClick={() => setDisplayToc(!displayToc)}>
+          目次
+        </button>
+        { displayToc &&
+            ReactDOM.createPortal(
+              <TocModal tableOfContents={post.tableOfContents} closeFunc={() => setDisplayToc(false)} />,
+              tocButtonEl.current,
+            )
+        }
         <MDXRenderer>{post.body}</MDXRenderer>
         <hr
           style={{
