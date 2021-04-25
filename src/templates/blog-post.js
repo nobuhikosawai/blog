@@ -26,68 +26,66 @@ const navigation = css`
   }
 `;
 
-class BlogPostTemplate extends React.Component {
-  render() {
-    const post = this.props.data.mdx
-    const siteTitle = this.props.data.site.siteMetadata.title
-    const { previous, next } = this.props.pageContext
+const BlogPostTemplate = (props) => {
+  const post = props.data.mdx
+  const siteTitle = props.data.site.siteMetadata.title
+  const { previous, next } = props.pageContext
 
-    return (
-      <div css={wrapper}>
-        <Layout location={this.props.location} title={siteTitle}>
-          <SEO title={post.frontmatter.title} description={post.excerpt} />
-          <h1>{post.frontmatter.title}</h1>
-          <p
-            style={{
-              ...scale(-1 / 5),
-              display: `block`,
-              marginBottom: rhythm(1),
-              marginTop: rhythm(-1),
-            }}
-          >
-            {post.frontmatter.date}
-          </p>
-          <MDXRenderer>{post.body}</MDXRenderer>
-          <hr
-            style={{
-              marginBottom: rhythm(1),
-            }}
-          />
-          <Bio />
+  return (
+    <div css={wrapper}>
+      <Layout location={props.location} title={siteTitle}>
+        <SEO title={post.frontmatter.title} description={post.excerpt} />
+        <h1>{post.frontmatter.title}</h1>
+        <p
+          style={{
+            ...scale(-1 / 5),
+            display: `block`,
+            marginBottom: rhythm(1),
+            marginTop: rhythm(-1),
+          }}
+        >
+          {post.frontmatter.date}
+        </p>
+        <MDXRenderer>{post.body}</MDXRenderer>
+        <hr
+          style={{
+            marginBottom: rhythm(1),
+          }}
+        />
+        <Bio />
 
-          <ul
-            style={{
-              display: `flex`,
-              flexWrap: `wrap`,
-              justifyContent: `space-between`,
-              listStyle: `none`,
-              padding: 0,
-            }}
-          >
-            <li>
-              {previous && (
-                <Link to={previous.fields.slug} rel="prev">
-                  ← {previous.frontmatter.title}
-                </Link>
-              )}
-            </li>
-            <li>
-              {next && (
-                <Link to={next.fields.slug} rel="next">
-                  {next.frontmatter.title} →
-                </Link>
-              )}
-            </li>
-          </ul>
-        </Layout>
-        <aside>
-          <div css={navigation}>
-            <Toc tableOfContents={post.tableOfContents} />
-          </div>
-        </aside>
-      </div>
-    )
-  }
+        <ul
+          style={{
+            display: `flex`,
+            flexWrap: `wrap`,
+            justifyContent: `space-between`,
+            listStyle: `none`,
+            padding: 0,
+          }}
+        >
+          <li>
+            {previous && (
+              <Link to={previous.fields.slug} rel="prev">
+                ← {previous.frontmatter.title}
+              </Link>
+            )}
+          </li>
+          <li>
+            {next && (
+              <Link to={next.fields.slug} rel="next">
+                {next.frontmatter.title} →
+              </Link>
+            )}
+          </li>
+        </ul>
+      </Layout>
+      <aside>
+        <div css={navigation}>
+          <Toc tableOfContents={post.tableOfContents} />
+        </div>
+      </aside>
+    </div>
+  )
 }
 
 export default BlogPostTemplate
