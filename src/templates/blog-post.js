@@ -34,13 +34,13 @@ const tocButton = css`
   margin-bottom: ${rhythm(1)};
   border: none;
   border-radius: 4px;
-  background: lightgray;
+  background: var(--light-dim);
   padding: 4px 8px;
   @media (min-width: 1024px) {
     display: none;
   }
   &:hover, &:active{
-    background: gray;
+    background: var(--dim);
   }
   &:active {
     color: inherit;
@@ -57,7 +57,7 @@ const tocModal = css`
 
 const tocModalContent = css`
   background: white;
-  border: 1px solid lightgray;
+  border: 1px solid var(--light-dim);
   box-shadow: rgb(116 129 141 / 10%) 0px 3px 8px 0px;
   border-radius: 8px;
   max-width: 300px;
@@ -69,7 +69,7 @@ const tocModalContent = css`
     top: 5px;
     left: 8px;
     border: 8px solid transparent;
-    border-bottom: 8px solid lightgray;
+    border-bottom: 8px solid var(--light-dim);
   }
   &::after {
     content: "";

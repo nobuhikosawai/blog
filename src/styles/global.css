@@ -1,3 +1,12 @@
+:root {
+  --bg: #fbfbfd;
+  --text-normal: #1d1d1f;
+  --link: #6f3381;
+  --light-dim: #bdc0ba;
+  --dim: #828282;
+}
+
+/* gatsby-remark-code-titles */
 code[class*='language-'] {
   font-size: 0.9em;
 }

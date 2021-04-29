@@ -25,7 +25,7 @@ const tocList = css`
     left: 5px;
     border-radius: 4px;
     width: 2px;
-    background: lightgray;
+    background: var(--light-dim);
     top: 12px;
     bottom: 12px;
   }
@@ -48,7 +48,7 @@ const tocItem = css`
     border: 2px white solid;
     width: 12px;
     height: 12px;
-    background: gray;
+    background: var(--dim);
   }
 `
 const tocItemSecond = css`
@@ -64,7 +64,7 @@ const tocItemSecond = css`
     border: 2px white solid;
     width: 8px;
     height: 8px;
-    background: gray;
+    background: var(--dim);
   }
 `
 const tocItemLink = css`
