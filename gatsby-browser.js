@@ -2,5 +2,5 @@
 import 'typeface-montserrat'
 import 'typeface-merriweather'
 // code block
-import 'prismjs/themes/prism-okaidia.css'
+import './src/styles/prism-monokai-pro-like.css'
 import './src/styles/global.css'

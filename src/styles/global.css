@@ -6,6 +6,7 @@
   --color-purple-black-1: #333135;
   --color-purple-black-2: #3d3a41;
   --color-light-gray: #828282;
+  --color-light-gray-rgb: 130, 130, 130;
   --color-gray: #bdc0ba;
   --color-pink: #e13d8c;
   --color-purple: #6f3381;
@@ -61,29 +62,30 @@
   }
 }
 
-/* gatsby-remark-code-titles */
+/* gatsby-remark-prismjs */
 code[class*='language-'] {
-  font-size: 0.9em;
+  font-size: 0.9rem;
 }
 
+.gatsby-highlight > pre[class*='language-'] {
+  border-radius: 0.3rem;
+}
+
+/* gatsby-remark-code-titles */
 .gatsby-code-title {
-  margin-bottom: -0.6rem;
-  padding: 0.5em 1em;
-  font-family: Consolas, 'Andale Mono WT', 'Andale Mono', 'Lucida Console',
-    'Lucida Sans Typewriter', 'DejaVu Sans Mono', 'Bitstream Vera Sans Mono',
-    'Liberation Mono', 'Nimbus Mono L', Monaco, 'Courier New', Courier,
-    monospace;
-
-  background-color: black;
-  color: white;
+  position: absolute;
+  padding: 0 0.5rem;
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+  font-size: 0.8rem;
+  background-color: #453f46;
+  color: #fcfcfa;
   z-index: 0;
-
-  border-top-left-radius: 0.3em;
-  border-top-right-radius: 0.3em;
+  border-top-left-radius: 0.3rem;
+  border-bottom-right-radius: 0.3rem;
 }
 
 .gatsby-code-title + .gatsby-highlight > pre[class*='language-'] {
-  border-radius: 0 0 0.3em 0.3em;
+  padding-top: 2rem;
 }
 
 /* gatsby-remark-autolink-headers */
