@@ -52,6 +52,15 @@
   }
 }
 
+/* gatsby-plugin-twitter */
+.twitter-tweet > iframe {
+  border-radius: 13px;
+
+  @media (prefers-color-scheme: dark) {
+    filter: grayscale(50%);
+  }
+}
+
 /* gatsby-remark-code-titles */
 code[class*='language-'] {
   font-size: 0.9em;
