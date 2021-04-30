@@ -1,0 +1,13 @@
+:root {
+  --color-bg: var(--color-white);
+  --color-bg-overlay: var(--color-white);
+  --color-border-overlay: var(--color-light-gray);
+  --color-text-primary: var(--color-black);
+  --color-link: var(--color-purple);
+  --color-btn-bg: var(--color-gray);
+  --color-btn-bg-active: var(--color-light-gray);
+  --color-btn-text: var(--color-black);
+  --color-toc-border: var(--color-gray);
+  --color-toc-bullet: var(--color-light-gray);
+  --dropdown-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px 0px;
+}
