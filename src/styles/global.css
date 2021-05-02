@@ -15,11 +15,11 @@
   --timing: ease-out;
 }
 
-body, a {
+/* body, a {
   transition:
     color var(--duration) var(--timing),
     background-color var(--duration) var(--timing)
-}
+} */
 
 /* gatsby-plugin-twitter */
 .twitter-tweet > iframe {
