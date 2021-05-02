@@ -29,10 +29,14 @@ export const onRenderBody = ({ setHeadComponents }) => {
 
                 if (preferredTheme === 'light') {
                   lightEl.disabled = false;
+                  lightEl.media = 'all';
                   darkEl.disabled = true;
+                  darkEl.media = 'not all'
                 } else {
                   lightEl.disabled = true;
+                  lightEl.media = 'not all';
                   darkEl.disabled = false;
+                  darkEl.media = 'all'
                 }
               }
             }
