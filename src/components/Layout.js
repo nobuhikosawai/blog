@@ -1,7 +1,19 @@
 import React from 'react'
 import { Link } from 'gatsby'
+import { css } from '@emotion/core';
+import Loadable from "@loadable/component"
 
 import { rhythm, scale } from '../utils/typography'
+
+const DarkModeToggleButton = Loadable(() => import('./DarkModeToggleButton'));
+
+const headerLayout = css`
+  display: flex;
+  justify-content: space-between;
+  & > dark-mode-toggle {
+    padding-top: 1.25rem;
+  }
+`;
 
 const Layout = (props) => {
   const { location, title, children } = props
@@ -61,7 +73,10 @@ const Layout = (props) => {
         padding: `${rhythm(1.5)} ${rhythm(3 / 4)}`,
       }}
     >
-      {header}
+      <header css={headerLayout}>
+        {header}
+        <DarkModeToggleButton />
+      </header>
       {children}
       <footer>
         © 2018, Built with <a href="https://www.gatsbyjs.org">Gatsby</a>

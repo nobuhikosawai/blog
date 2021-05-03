@@ -97,5 +97,13 @@ module.exports = {
     },
     `gatsby-plugin-emotion`,
     `gatsby-plugin-twitter`,
+    {
+      resolve: `gatsby-plugin-postcss`,
+      options: {
+        postCssPlugins: [
+          require(`postcss-dark-theme-class`)
+        ],
+      },
+    },
   ],
 }

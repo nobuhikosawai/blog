@@ -10,22 +10,22 @@
   --color-gray: #bdc0ba;
   --color-pink: #e13d8c;
   --color-purple: #6f3381;
-}
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --color-bg: var(--color-white);
-    --color-bg-overlay: var(--color-white);
-    --color-border-overlay: var(--color-light-gray);
-    --color-text-primary: var(--color-black);
-    --color-link: var(--color-purple);
-    --color-btn-bg: var(--color-gray);
-    --color-btn-bg-active: var(--color-light-gray);
-    --color-btn-text: var(--color-black);
-    --color-toc-border: var(--color-gray);
-    --color-toc-bullet: var(--color-light-gray);
-    --dropdown-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px 0px;
-  }
+  --duration: 0.25s;
+  --timing: ease-out;
+
+  /* light theme */
+  --color-bg: var(--color-white);
+  --color-bg-overlay: var(--color-white);
+  --color-border-overlay: var(--color-light-gray);
+  --color-text-primary: var(--color-black);
+  --color-link: var(--color-purple);
+  --color-btn-bg: var(--color-gray);
+  --color-btn-bg-active: var(--color-light-gray);
+  --color-btn-text: var(--color-black);
+  --color-toc-border: var(--color-gray);
+  --color-toc-bullet: var(--color-light-gray);
+  --dropdown-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px 0px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -51,15 +51,21 @@
   img[src*='.svg']:hover {
     filter: invert(40%);
   }
+
+  .twitter-tweet > iframe {
+    filter: grayscale(50%);
+  }
+}
+
+body,
+a {
+  transition: color var(--duration) var(--timing),
+    background-color var(--duration) var(--timing);
 }
 
 /* gatsby-plugin-twitter */
 .twitter-tweet > iframe {
   border-radius: 13px;
-
-  @media (prefers-color-scheme: dark) {
-    filter: grayscale(50%);
-  }
 }
 
 /* gatsby-remark-prismjs */
@@ -108,4 +114,9 @@ h4:hover .anchor > svg,
 h5:hover .anchor > svg,
 h6:hover .anchor > svg {
   visibility: visible;
+}
+
+/* dark-model-toggle */
+dark-mode-toggle {
+  --dark-mode-toggle-icon-size: 1.2rem;
 }
