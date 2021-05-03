@@ -119,4 +119,8 @@ h6:hover .anchor > svg {
 /* dark-model-toggle */
 dark-mode-toggle {
   --dark-mode-toggle-icon-size: 1.2rem;
+  line-height: 1rem;
+}
+dark-mode-toggle::part(fieldset) {
+  padding: 0;
 }

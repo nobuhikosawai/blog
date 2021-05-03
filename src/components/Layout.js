@@ -10,8 +10,16 @@ const DarkModeToggleButton = Loadable(() => import('./DarkModeToggleButton'));
 const headerLayout = css`
   display: flex;
   justify-content: space-between;
-  & > dark-mode-toggle {
-    padding-top: 1.25rem;
+  align-items: center;
+`;
+
+const head1 = css`
+  font-size: ${scale(1).fontSize};
+  line-hight: ${scale(1).lineHeight};
+  margin: 0;
+  @media (min-width: 1024px) {
+    font-size: ${scale(1.5).fontSize};
+    line-hight: ${scale(1.5).lineHeight};
   }
 `;
 
@@ -22,45 +30,44 @@ const Layout = (props) => {
 
   if (location.pathname === rootPath) {
     header = (
-      <h1
-        style={{
-          ...scale(1.5),
-          marginBottom: rhythm(1.5),
-          marginTop: 0,
-        }}
-      >
-        <Link
-          style={{
-            boxShadow: `none`,
-            textDecoration: `none`,
-            color: `inherit`,
-          }}
-          to={`/`}
-        >
-          {title}
-        </Link>
-      </h1>
+      <header css={headerLayout} style={{marginBottom: rhythm(1)}}>
+        <h1 css={head1}>
+          <Link
+            style={{
+              boxShadow: `none`,
+              textDecoration: `none`,
+              color: `inherit`,
+            }}
+            to={`/`}
+          >
+            {title}
+          </Link>
+        </h1>
+        <DarkModeToggleButton />
+      </header>
     )
   } else {
     header = (
-      <h3
-        style={{
-          fontFamily: `Montserrat, sans-serif`,
-          marginTop: 0,
-          marginBottom: rhythm(-1),
-        }}
-      >
-        <Link
+      <header css={headerLayout} style={{marginBottom: rhythm(-1)}}>
+        <h3
           style={{
-            boxShadow: `none`,
-            textDecoration: `none`,
-            color: `inherit`,
+            fontFamily: `Montserrat, sans-serif`,
+            margin: 0,
           }}
-          to={`/`}
         >
-          {title}
-        </Link>
-      </h3>
+          <Link
+            style={{
+              boxShadow: `none`,
+              textDecoration: `none`,
+              color: `inherit`,
+            }}
+            to={`/`}
+          >
+            {title}
+          </Link>
+        </h3>
+        <DarkModeToggleButton />
+      </header>
     )
   }
 
@@ -73,10 +80,7 @@ const Layout = (props) => {
         padding: `${rhythm(1.5)} ${rhythm(3 / 4)}`,
       }}
     >
-      <header css={headerLayout}>
-        {header}
-        <DarkModeToggleButton />
-      </header>
+      {header}
       {children}
       <footer>
         © 2018, Built with <a href="https://www.gatsbyjs.org">Gatsby</a>
