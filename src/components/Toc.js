@@ -14,6 +14,7 @@ const title = css`
   font-size: ${titleScale.fontSize};
   line-height: ${titleScale.lineHeight};
   margin: 0 0 ${rhythm(0.25)} 0;
+  color: var(--color-text-primary);
 `;
 
 const tocList = css`
@@ -25,7 +26,7 @@ const tocList = css`
     left: 5px;
     border-radius: 4px;
     width: 2px;
-    background: lightgray;
+    background: var(--color-toc-border);
     top: 12px;
     bottom: 12px;
   }
@@ -45,10 +46,10 @@ const tocItem = css`
     left: -20px;
     top: 8px;
     border-radius: 50px;
-    border: 2px white solid;
+    border: 2px var(--color-bg) solid;
     width: 12px;
     height: 12px;
-    background: gray;
+    background: var(--color-toc-bullet);
   }
 `
 const tocItemSecond = css`
@@ -61,10 +62,10 @@ const tocItemSecond = css`
     top: 10px;
     border-radius: 50px;
     border-radius: 50px;
-    border: 2px white solid;
+    border: 2px var(--color-bg) solid;
     width: 8px;
     height: 8px;
-    background: gray;
+    background: var(--color-toc-bullet);
   }
 `
 const tocItemLink = css`

@@ -62,6 +62,7 @@ module.exports = {
           `gatsby-remark-prismjs`, // should be placed after `gatsby-remark-autolink-headers`
           `gatsby-remark-copy-linked-files`,
           `gatsby-remark-smartypants`,
+          `gatsby-remark-embedder`,
         ],
       },
     },
@@ -83,7 +84,7 @@ module.exports = {
         background_color: `#ffffff`,
         theme_color: `#663399`,
         display: `minimal-ui`,
-        icon: `content/assets/gatsby-icon.png`,
+        icon: `content/assets/pen-emoji.png`,
       },
     },
     `gatsby-plugin-offline`,
@@ -96,5 +97,13 @@ module.exports = {
     },
     `gatsby-plugin-emotion`,
     `gatsby-plugin-twitter`,
+    {
+      resolve: `gatsby-plugin-postcss`,
+      options: {
+        postCssPlugins: [
+          require(`postcss-dark-theme-class`)
+        ],
+      },
+    },
   ],
 }

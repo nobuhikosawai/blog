@@ -34,16 +34,14 @@ const tocButton = css`
   margin-bottom: ${rhythm(1)};
   border: none;
   border-radius: 4px;
-  background: lightgray;
+  background: var(--color-btn-bg);
   padding: 4px 8px;
+  color: var(--color-btn-text);
   @media (min-width: 1024px) {
     display: none;
   }
   &:hover, &:active{
-    background: gray;
-  }
-  &:active {
-    color: inherit;
+    background: var(--color-btn-bg-active);
   }
 `;
 
@@ -56,9 +54,9 @@ const tocModal = css`
 `;
 
 const tocModalContent = css`
-  background: white;
-  border: 1px solid lightgray;
-  box-shadow: rgb(116 129 141 / 10%) 0px 3px 8px 0px;
+  background-color: var(--color-bg-overlay);
+  border: 1px solid var(--color-border-overlay);
+  box-shadow: var(--dropdown-shadow);
   border-radius: 8px;
   max-width: 300px;
   min-width: 260px;
@@ -69,7 +67,7 @@ const tocModalContent = css`
     top: 5px;
     left: 8px;
     border: 8px solid transparent;
-    border-bottom: 8px solid lightgray;
+    border-bottom: 8px solid var(--color-border-overlay);
   }
   &::after {
     content: "";
@@ -77,7 +75,7 @@ const tocModalContent = css`
     top: 7px;
     left: 9px;
     border: 7px solid transparent;
-    border-bottom: 7px solid white;
+    border-bottom: 7px solid var(--color-bg-overlay);
   }
 `;
 
