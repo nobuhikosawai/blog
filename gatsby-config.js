@@ -72,11 +72,11 @@ module.exports = {
     {
       resolve: `gatsby-plugin-manifest`,
       options: {
-        name: `Gatsby Starter Blog`,
-        short_name: `GatsbyJS`,
+        name: `misspelling`,
+        short_name: `misspelling`,
         start_url: `/`,
-        background_color: `#ffffff`,
-        theme_color: `#663399`,
+        background_color: `#fcfbfd`,
+        theme_color: `#6f3381`,
         display: `minimal-ui`,
         icon: `content/assets/pen-emoji.png`,
       },
