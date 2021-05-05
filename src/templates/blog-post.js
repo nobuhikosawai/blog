@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react'
 import ReactDOM from 'react-dom'
 import { Link, graphql } from 'gatsby'
 import { MDXRenderer } from "gatsby-plugin-mdx"
-import { css } from '@emotion/core';
+import { css } from '@emotion/react';
 
 import Bio from '../components/Bio'
 import Layout from '../components/Layout'
