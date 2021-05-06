@@ -5,6 +5,7 @@ module.exports = {
   },
   "plugins": [
     "react",
+    "@emotion",
   ],
   "globals": {
     "graphql": false,
@@ -15,5 +16,8 @@ module.exports = {
       "experimentalObjectRestSpread": true,
       "jsx": true,
     },
-  }
+  },
+  "rules": {
+    "@emotion/pkg-renaming": "error",
+  },
 }

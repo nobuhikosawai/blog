@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'gatsby';
-import { css } from '@emotion/core';
+import { css } from '@emotion/react';
 import { scale, rhythm } from '../utils/typography';
 
 const root = css`
