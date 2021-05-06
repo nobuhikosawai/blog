@@ -18,7 +18,7 @@ function Bio() {
             }}
           >
             <StaticImage
-              src="../../images/profile-pic.jpg"
+              src="../images/profile-pic.jpg"
               alt={author}
               formats={["AUTO", "WEBP", "AVIF"]}
               layout="fixed"

@@ -30,8 +30,8 @@ module.exports = {
     {
       resolve: `gatsby-source-filesystem`,
       options: {
-        path: `${__dirname}/content/assets`,
-        name: `assets`,
+        path: `${__dirname}/src/images`,
+        name: `images`,
       },
     },
     {
@@ -78,7 +78,7 @@ module.exports = {
         background_color: `#fcfbfd`,
         theme_color: `#6f3381`,
         display: `minimal-ui`,
-        icon: `content/assets/pen-emoji.png`,
+        icon: `src/images/pen-emoji.png`,
       },
     },
     `gatsby-plugin-offline`,
