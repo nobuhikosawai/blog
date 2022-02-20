@@ -1,0 +1,44 @@
+---
+title: 時刻に応じた時計の絵文字を表示するshellscript
+date: 2022-02-20
+---
+
+手元でちょっとしたスクリプトを作っていて時刻に応じた時計の絵文字を表示したくなったので書いた。
+
+時計の絵文字は30分刻みであるので、0~30、31~59 の範囲で切り替わる。
+
+```bash:title=clcok_emoji.sh
+#!/bin/sh
+
+function clock_emoji() {
+  local hour=$1
+  local mod_hour=$(($hour % 12))
+  if [ $mod_hour -eq 0 ]; then
+    local time="1f55B"
+  else
+    local hex_hour=$(printf '%x\n' $(echo $((mod_hour - 1))))
+    local time=$(echo $((16#1f550+16#"$hex_hour")) | xargs printf '%x\n')
+  fi
+  local minute=$2
+  if [ $minute -gt 30 ]; then
+    local time=$(echo $((16#"$time"+16#c)) | xargs printf '%x\n')
+  fi
+  echo "\U$time"
+}
+
+clock_emoji $1 $2
+```
+
+Unicodeを取得するだけなら
+
+```
+$ ./clock_emoji.sh 03 05
+\U1f552
+```
+
+絵文字自体を表示するなら
+
+```
+$ echo -e $(./clock_emoji.sh 03 05)
+🕒
+```
