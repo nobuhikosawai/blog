@@ -6,6 +6,7 @@ exports.createPages = ({ graphql, actions }) => {
 
   return new Promise((resolve, reject) => {
     const blogPost = path.resolve(`./src/templates/blog-post.js`)
+    const blogPosts = path.resolve(`./src/templates/blog-posts.js`)
     resolve(
       graphql(
         `
@@ -53,6 +54,17 @@ exports.createPages = ({ graphql, actions }) => {
         })
       })
     )
+    // list of posts per lang
+    const languages = ['ja', 'en']
+    languages.forEach(lang => {
+      createPage({
+        path: `/${lang}`,
+        component: blogPosts,
+        context: {
+          langRegexp: `/\/${lang}\//`
+        },
+      })
+    })
   })
 }
 
