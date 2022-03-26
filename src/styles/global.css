@@ -7,6 +7,7 @@
   --color-purple-black-2: #3d3a41;
   --color-light-gray: #828282;
   --color-light-gray-rgb: 130, 130, 130;
+  --color-dark-gray: #2f2f2f;
   --color-gray: #bdc0ba;
   --color-pink: #e13d8c;
   --color-purple: #6f3381;
@@ -23,6 +24,8 @@
   --color-btn-bg: var(--color-gray);
   --color-btn-bg-active: var(--color-light-gray);
   --color-btn-text: var(--color-black);
+  --color-btn-bg-outlined-active: var(--color-light-gray);
+  --color-btn-text-outlined: var(--color-dark-gray);
   --color-toc-border: var(--color-gray);
   --color-toc-bullet: var(--color-light-gray);
   --dropdown-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px 0px;
@@ -37,7 +40,9 @@
     --color-link: var(--color-pink);
     --color-btn-bg: var(--color-gray);
     --color-btn-bg-active: var(--color-light-gray);
+    --color-btn-text-outlined: var(--color-gray);
     --color-btn-text: var(--color-black);
+    --color-btn-text-secondary: var(--color-btn-bg);
     --color-toc-border: var(--color-gray);
     --color-toc-bullet: var(--color-light-gray);
     --dropdown-shadow: rgba(28, 33, 40, 0.85) 0px 16px 32px 0px;

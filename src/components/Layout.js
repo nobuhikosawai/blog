@@ -2,6 +2,8 @@ import React from 'react'
 import { Link } from 'gatsby'
 import { css } from '@emotion/react';
 import Loadable from "@loadable/component"
+import { LanguageSelector } from './LanguageSelector';
+// import DarkModeToggleButton from './DarkModeToggleButton';
 
 import { rhythm, scale } from '../utils/typography'
 
@@ -23,14 +25,25 @@ const head1 = css`
   }
 `;
 
+const right = css`
+  display: flex;
+  align-items: center;
+`
+const language = css`
+  margin-right: ${rhythm(0.2)};
+  @media (max-width: 1024px) {
+    margin-right: ${rhythm(0.1)};
+  }
+`
+
 const Layout = (props) => {
   const { location, title, children } = props
-  const rootPath = `${__PATH_PREFIX__}/`
+  const rootPaths = [`${__PATH_PREFIX__}/`, `${__PATH_PREFIX__}/ja`, `${__PATH_PREFIX__}/en`]
   let header
 
-  if (location.pathname === rootPath) {
+  if (rootPaths.includes(location.pathname)) {
     header = (
-      <header css={headerLayout} style={{marginBottom: rhythm(1)}}>
+      <header css={headerLayout} style={{ marginBottom: rhythm(1) }}>
         <h1 css={head1}>
           <Link
             style={{
@@ -43,12 +56,17 @@ const Layout = (props) => {
             {title}
           </Link>
         </h1>
-        <DarkModeToggleButton />
+        <div css={right}>
+          <div css={language} style={{ ...scale(1 / 10) }}>
+            <LanguageSelector pathname={location.pathname} />
+          </div>
+          <DarkModeToggleButton />
+        </div>
       </header>
     )
   } else {
     header = (
-      <header css={headerLayout} style={{marginBottom: rhythm(-1)}}>
+      <header css={headerLayout} style={{ marginBottom: rhythm(-1) }}>
         <h3
           style={{
             fontFamily: `Montserrat, sans-serif`,
@@ -66,7 +84,12 @@ const Layout = (props) => {
             {title}
           </Link>
         </h3>
-        <DarkModeToggleButton />
+        <div css={right}>
+          <div css={language} >
+            <LanguageSelector pathname={location.pathname} />
+          </div>
+          <DarkModeToggleButton />
+        </div>
       </header>
     )
   }
