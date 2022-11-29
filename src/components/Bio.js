@@ -33,7 +33,7 @@ function Bio() {
               }} />
             <p>
               Personal blog by <a href={`https://twitter.com/${social.twitter}`}>{author}</a><br />
-              who lives and works in Japan.
+              backend and frontend engineer. All views are my own.
             </p>
           </div>
         );
