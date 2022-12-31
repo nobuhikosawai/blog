@@ -2,20 +2,122 @@
 title: Flutterで小さめのアプリを作ってみた知見(アーキテクチャ・状態管理手法編)
 date: 2021-04-17
 ---
+
 import AppVideo from './todo_app_example.mp4'
 import LoginVideo from './todo_app_login.mp4'
 
+(2022-11-30 追記)
+この記事は当時の理解に基いて書いたものですが、その後もう少し大きい規模のアプリケーションを作る機会があり、人と話しながらアーキテクチャ選定を進めているのですが、その観点からみると、大規模なアプケーション開発に向かない部分があったり、今みると我ながらどうしてこうしたと思う部分があるので、メモを追記しておきます。ライブラリの組み合わせ方みたいなところだけは今でも参考になると思います(逆にいうとそれ以外のところは微妙だったかもと思いなおしています。)
+
+1.  hooksを多用するかどうか
+
+アプリケーションの規模によりそうだなと思っていて、特に論点になりそうなのが状態管理系のものかなと思います。
+
+hooks的なものは便利だなと思いつつ、flutterでは基本的に全てクラスのインスタンスとして扱かわれる以上、必要な関数だけをhooksから返すといったような使いかたはできません。
+
+なので、例えばあるフォームからticketIdを登録して使用済みにするというような例を考えてみます。useXXFormを定義して、canSubmitを返したいようなケースを考えます。
+
+tsだと関数をそのまま返すことができるので、以下のように書けます。
+
+```tsx
+const useUseTicket = () => {
+  const [ticketId, setTicketId] = useState(null);
+
+  const canSubmit = useMemo(() => !!ticketId, [ticketId]);
+
+  const [mutate] = useMutation(USE_TICKET);
+
+  return {
+    ticketId,
+    setTicketId,
+    canSubmit,
+    mutate
+  }
+}
+
+const { setTicketId, canSubmit, mutate } = useUseTicket();
+```
+
+flutterだとclassにマッピングして返すことが一般的なので、それ専用のクラスを定義する必要ができ、実質それがviewmodelに近しいものになります。
+
+```dart
+class TicketController {
+  TicketController(this._ref);
+
+  final Ref _ref;
+  late final GraphQLService _service = _ref.read(graphqlServiceProvider);
+
+  String? _ticketId;
+  String? get ticketId => _ticketId;
+
+  bool get canSubmit => _ticketId != null;
+
+  void setTicketId(String ticketId) {
+    _ticketId = _ticketId;
+  }
+
+  Future<void> mutate() {
+    return _service.mutate(
+      GUseTicketReq((d) => d..vars.input.ticketId = ticketId),
+    );
+  }
+}
+
+
+final fc = TicketController(ref);
+fc.setTicketId(ticketId);
+fc.mutate();
+```
+
+アプリケーションが小規模でview側にある程度ロジックを追いても気にならないようであれば、特に問題にならないと思うのですが、ある程度の規模になったりテスタビリティとかを気にしだすと使いにくいところがありそうです。
+
+formのような複数の状態が絡みあうようなものだと結局それらを束ねる状態クラスを定義する必要が発生しそうなので、それほど便利ではない可能性がありそうだなと感じています。
+
+またflutter_hooksはhooksが基本的にWidgetから呼びだす必要があるため、hooksをネストして、他の状態クラスの内部から使うといった使いかたはできないところも現実に使う上では困りそうなところです。
+
+2. AsyncValueを使うかどうか
+
+AsyncValue自体は便利なメソッドが沢山生えていますが、UIで使うにはもしかしたら不便かもしれません。
+AsyncValueのwhenを使うと以下のように非同期状態における描画を簡単に書くことができます。
+
+```dart
+class Example extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final AsyncValue<User> user = ref.watch(userProvider);
+
+    return user.when(
+      loading: () => CircularProgressIndicator(),
+      error: (error, stack) => Text('Oops, something unexpected happened'),
+      data: (user) => Text('Hello ${user.name}'),
+    );
+  }
+}
+```
+
+ただし、欠点もあり、いずれかの状態しかとりえないため、エラーが起きたときにトーストを表示するようなUIを定義した場合にdataが取得できなくなり、画面が白くなるなどの問題が起きます。
+
+また、pull to refreshをしてエラーだったら、前回の状態を保持したままエラートーストを表示するといったような使い方をする場合、前回状態とエラー状態を同時に表示する必要があるので、`when` メソッドなどを使うことができません。
+whenを使わなければいいだけですが、その場合view modelでAsyncValueが持っているような`isLoading`のような定義は内部で独自に定義してしまえばよいので、特にうれしくないかもしれません.
+
+逆にview modelではなくリソースを操作するようなcontrollerを定義しているプロジェクトの場合は使えるかもしれないです(未検証)
+
+3. Controllerのcontructorで非同期通信を呼び出している件
+
+contructorが副作用を持つのは気持ち悪いので、単にview側で`useFuture(useMemoized(() => fetch()))` を走らせた方が良いと思います。
+
+
 # はじめに
 
-この記事はこの 2, 3ヶ月ほど、お手伝いなどで Flutter のアプリ開発を行う機会があったのですが、その際に調べたり考えたりしたことをまとめたものです。
-Flutter は公式ドキュメントが充実しているものの、実際に実装してみると意外と細かくハマったり、実装上で考えることがあるので、今回自分が実装したことの範囲で、そのあたりのことをまとめてみました。何かの参考になれば非常にありがたいですし、本格的なFlutterのアプリを実装するのは今回が初めてなので間違っていることや改善点があればまさかりを投げていただけると嬉しいです。
+この記事はこの 2, 3 ヶ月ほど、お手伝いなどで Flutter のアプリ開発を行う機会があったのですが、その際に調べたり考えたりしたことをまとめたものです。
+Flutter は公式ドキュメントが充実しているものの、実際に実装してみると意外と細かくハマったり、実装上で考えることがあるので、今回自分が実装したことの範囲で、そのあたりのことをまとめてみました。何かの参考になれば非常にありがたいですし、本格的な Flutter のアプリを実装するのは今回が初めてなので間違っていることや改善点があればまさかりを投げていただけると嬉しいです。
 
 主に以下のようなことについてまとめていく予定です。
 
 - 採用したアーキテクチャと状態管理の方法
-- Navigator2.0を用いた画面遷移の実装
+- Navigator2.0 を用いた画面遷移の実装
 - ネイティブのコードの呼び出し方
-- その他開発時のtips/実装時にハマったことなど
+- その他開発時の tips/実装時にハマったことなど
 
 以下は直接掘り下げることができていないので、別の機会に触れようと思います。
 
@@ -26,21 +128,20 @@ Flutter は公式ドキュメントが充実しているものの、実際に実
 
 # アプリの概要
 
-実際のコードがあったほうがわかりやすいと思うので、今回得た知見をもとにTODOアプリを作ってみました。
+実際のコードがあったほうがわかりやすいと思うので、今回得た知見をもとに TODO アプリを作ってみました。
 
 アプリのコードはこちらです。 https://github.com/nobuhikosawai/flutter_todo
 
+以下のようなアプリでユーザーの認証と TODO の CRUD を機能として持っています。認証とデータの永続化のバックエンドには Firebase を使っています。
 
-以下のようなアプリでユーザーの認証とTODOのCRUDを機能として持っています。認証とデータの永続化のバックエンドにはFirebaseを使っています。
-
-<video autoPlay loop playsinline style={{borderRadius: '32px'}}>
-   <source src={AppVideo} type="video/mp4" />
-   <p>todoの操作</p>
+<video autoPlay loop playsinline style={{ borderRadius: '32px' }}>
+  <source src={AppVideo} type="video/mp4" />
+  <p>todoの操作</p>
 </video>
 
-<video autoPlay loop playsinline style={{borderRadius: '32px'}}>
-   <source src={LoginVideo} type="video/mp4" />
-   <p>loginの操作</p>
+<video autoPlay loop playsinline style={{ borderRadius: '32px' }}>
+  <source src={LoginVideo} type="video/mp4" />
+  <p>loginの操作</p>
 </video>
 
 # アーキテクチャの概要
@@ -49,22 +150,22 @@ Flutter は公式ドキュメントが充実しているものの、実際に実
 
 クリーンアーキテクチャについては以下の記事などを参考にしてください
 
-- [クリーンアーキテクチャ(The Clean Architecture翻訳)](https://blog.tai2.net/the_clean_architecture.html)
+- [クリーンアーキテクチャ(The Clean Architecture 翻訳)](https://blog.tai2.net/the_clean_architecture.html)
 - [実装クリーンアーキテクチャ](https://qiita.com/nrslib/items/a5f902c4defc83bd46b8)
 - [Getting Started for Clean Architecture](https://github.com/neonankiti/CleanArchitectureSample/wiki/Getting-Started-for-Clean-Architecture)
 
-今回の設計ではは大きくはdata fetchingレイヤーとpresentationalレイヤーの2つに分割しています。
+今回の設計ではは大きくは data fetching レイヤーと presentational レイヤーの 2 つに分割しています。
 
 ## data fetching レイヤー
 
-クリーンアーキテクチャのinterface adapter相当のレイヤーです。RepositoryとEntityを格納しています。 
-Repositoryはインターフェースと実装を分離して実際に使うクラスDIするようにしています。
+クリーンアーキテクチャの interface adapter 相当のレイヤーです。Repository と Entity を格納しています。
+Repository はインターフェースと実装を分離して実際に使うクラス DI するようにしています。
 
 ## presentational レイヤー
 
-ユーザーから実際に見える画面に関する責務を持つレイヤーです。ViewやControllerが該当します。
+ユーザーから実際に見える画面に関する責務を持つレイヤーです。View や Controller が該当します。
 
-Flutterでの状態管理のライブラリの選定については[こちらの記事](https://medium.com/flutter-jp/state-1daa7fd66b94)を参考にしています。
+Flutter での状態管理のライブラリの選定については[こちらの記事](https://medium.com/flutter-jp/state-1daa7fd66b94)を参考にしています。
 
 ライブラリ的には
 
@@ -75,9 +176,9 @@ Flutterでの状態管理のライブラリの選定については[こちらの
 
 を利用しています。
 
-上記のライブラリの使い方は色々なパターンがあると思うのですが、自分がReactの経験があることもあり、割とhooksを多用し、あまりViewModel的なレイヤーを配置せずuseProviderとuseStateを細かく使うようにしています。このあたりは、[React Hooksのドキュメント](https://ja.reactjs.org/docs/hooks-faq.html#should-i-use-one-or-many-state-variables)なども参考にしています。
+上記のライブラリの使い方は色々なパターンがあると思うのですが、自分が React の経験があることもあり、割と hooks を多用し、あまり ViewModel 的なレイヤーを配置せず useProvider と useState を細かく使うようにしています。このあたりは、[React Hooks のドキュメント](https://ja.reactjs.org/docs/hooks-faq.html#should-i-use-one-or-many-state-variables)なども参考にしています。
 
-(当然ですがReactとFlutterは異なるものなので、これが最適なのかやパフォーマンス的な問題を引き起こさないかについては、まだ自分の理解が足りていないところがあります。)
+(当然ですが React と Flutter は異なるものなので、これが最適なのかやパフォーマンス的な問題を引き起こさないかについては、まだ自分の理解が足りていないところがあります。)
 
 今回のアプリでどのように使っているかは後ほど説明します。
 
@@ -106,24 +207,24 @@ lib 以下のディレクトリ構成を示します。
 
 ### repositories
 
-API呼び出しなどアプリの外部にあるリソースへのアクセス方法のインターフェース定義です。
+API 呼び出しなどアプリの外部にあるリソースへのアクセス方法のインターフェース定義です。
 あくまでインターフェース定義だけで実装はここにはありません。
 
 これは特にモバイルアプリだと firestore などのリモートからのデータ取得とローカルキャッシュからのデータ取得が発生したりすることがあるためで、実装とインターフェースを区別にしています。
 
-慣習的に命名規則として Repository というsuffixをつけることが多いようなので、これを踏襲しています。
+慣習的に命名規則として Repository という suffix をつけることが多いようなので、これを踏襲しています。
 
 ### datastores
 
-repositoriesで定義されたインタフェースに沿う実際の実装が書かれています。
+repositories で定義されたインタフェースに沿う実際の実装が書かれています。
 
-先述の通り1つのインターフェースに紐付いてローカルとリモートのように複数のdatastoreの実装が存在することもありえます。(firebaseを使っているとライブラリ側でローカルとリモートの扱いを吸収してくれるので、今回例として作成したtodoアプリではそこまで複雑な実装はしていないです。)
+先述の通り 1 つのインターフェースに紐付いてローカルとリモートのように複数の datastore の実装が存在することもありえます。(firebase を使っているとライブラリ側でローカルとリモートの扱いを吸収してくれるので、今回例として作成した todo アプリではそこまで複雑な実装はしていないです。)
 
-命名規則として RepositoryImpl というsuffixをつけています。
+命名規則として RepositoryImpl という suffix をつけています。
 
 ### providers
 
-他のクラスがレポジトリを使用する際に具体的にどのクラスを使用するかの依存関係を注入してます。RiverpodのProviderを使ってDIしています。
+他のクラスがレポジトリを使用する際に具体的にどのクラスを使用するかの依存関係を注入してます。Riverpod の Provider を使って DI しています。
 
 ### entities
 
@@ -138,9 +239,9 @@ repositoriesで定義されたインタフェースに沿う実際の実装が�
 
 ### controllers
 
-ユースケース相当のレイヤーです。画面から呼び出す状態の定義と変更のためのロジックを記述します。実装にはStateNotifier を使っています。
+ユースケース相当のレイヤーです。画面から呼び出す状態の定義と変更のためのロジックを記述します。実装には StateNotifier を使っています。
 
-命名規則としてControllerというsuffixをつけています。
+命名規則として Controller という suffix をつけています。
 
 ### screens
 
@@ -148,13 +249,13 @@ repositoriesで定義されたインタフェースに沿う実際の実装が�
 
 1 つの画面内部で複数の Widget を持つことがあるため、ルーティングをもつ画面ごとにディレクトリを切り、その中に複数の Widget を格納するようにしています。
 
-命名規則としては、ディレクトリが `${page_name}_screen` になっており、特にルーティングに紐づくような画面は同名で保存しています(`${page_name}_screen/${page_name}_screen.dart` の形式で格納されています。 例えば`lib/ui/screen/todo_screen/todo_screen.dart`のような形式です)それ以外のWidgetについては特に命名のルールは定めていません。
+命名規則としては、ディレクトリが `${page_name}_screen` になっており、特にルーティングに紐づくような画面は同名で保存しています(`${page_name}_screen/${page_name}_screen.dart` の形式で格納されています。 例えば`lib/ui/screen/todo_screen/todo_screen.dart`のような形式です)それ以外の Widget については特に命名のルールは定めていません。
 
 ### common
 
-アプリ内で共通で使う汎用的なUIコンポーネントがあれば別途専用のディレクトリを定義してもよい良いと考えています。
+アプリ内で共通で使う汎用的な UI コンポーネントがあれば別途専用のディレクトリを定義してもよい良いと考えています。
 
-todoアプリの例ではそこまで必要なかったので作成はしていません。
+todo アプリの例ではそこまで必要なかったので作成はしていません。
 
 # 依存の順序
 
@@ -166,17 +267,17 @@ UI Widet は StateNotifierProvider を経由して、Controller(StateNotifier)�
 
 # 実装例
 
-ここからは上記の設計方針に基づいて、Todoアプリの例で実際にどのように実装しているかを見ていきたいと思います。
+ここからは上記の設計方針に基づいて、Todo アプリの例で実際にどのように実装しているかを見ていきたいと思います。
 
-メインの画面であるTodoの画面を例に今回作成したアプリがどのように実装しているかについて説明します。
+メインの画面である Todo の画面を例に今回作成したアプリがどのように実装しているかについて説明します。
 
-## Data fetchingレイヤー
+## Data fetching レイヤー
 
 データ取得側のレイヤーについてまとめます。先述の通り、レポジトリパターンを採用しています。
 
-この例ではTodoを取得します。
+この例では Todo を取得します。
 
-Todo取得のために必要なレポジトリは `TodoRepository` で定義されています。
+Todo 取得のために必要なレポジトリは `TodoRepository` で定義されています。
 
 ```dart
 import '../entities/todo.dart';
@@ -196,6 +297,7 @@ abstract class TodoRepository {
   Future<void> deleteTodo({required String id});
 }
 ```
+
 レポジトリの実装は別途 `TodoRepositoryImpl`として定義されています。
 
 ```dart
@@ -276,7 +378,7 @@ class TodoRepositoryImpl extends TodoRepository {
 }
 ```
 
-レポジトリは取得したリソースとしてentityのインスタンスを返します。entityは別で `Todo`と`Todos`として定義されています。単一のTodoモデルと配列を扱うファーストクラスコレクションとしてのTodosモデルの2つを定義しています。immutableになるようにFreezedを用いています。entityは以下のように定義されています。
+レポジトリは取得したリソースとして entity のインスタンスを返します。entity は別で `Todo`と`Todos`として定義されています。単一の Todo モデルと配列を扱うファーストクラスコレクションとしての Todos モデルの 2 つを定義しています。immutable になるように Freezed を用いています。entity は以下のように定義されています。
 
 ```dart
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -297,7 +399,7 @@ abstract class Todo with _$Todo {
 }
 ```
 
-Todosの方はインターフェースの定義に加えて、コレクションの操作などアプリのビジネスルールとなるtodoの操作に関するロジックが含まれています。
+Todos の方はインターフェースの定義に加えて、コレクションの操作などアプリのビジネスルールとなる todo の操作に関するロジックが含まれています。
 
 ```dart
 import 'package:freezed_annotation/freezed_annotation.dart';
@@ -381,14 +483,15 @@ abstract class Todos implements _$Todos {
   double newPosition() {
      ...
   }
-  
+
   double _reorderedPositionAtNewIndex(int newIndex) {
      ...
   }
 }
 
 ```
-定義したRepositoryの受け渡しにはProviderを使ってDIをしています。Providerの実装は`todoRepositoryProvider`として定義されており、以下のような実装になっています。
+
+定義した Repository の受け渡しには Provider を使って DI をしています。Provider の実装は`todoRepositoryProvider`として定義されており、以下のような実装になっています。
 
 ```dart
 import 'package:riverpod/riverpod.dart';
@@ -402,13 +505,13 @@ final todoRepositoryProvider = Provider((ref) => TodoRepositoryImpl());
 
 マップのメインの画面は`TodoScreen`として定義されています。
 
-マップから参照するTodoの状態はアプリケーションの状態として、StateNotifierで管理しています。Widgetとの状態の受け渡しにはRiverodのStateNotifierProvider経由で渡し、Widget側はFlutter HooksのuseProviderを利用して取り出しています。
+マップから参照する Todo の状態はアプリケーションの状態として、StateNotifier で管理しています。Widget との状態の受け渡しには Riverod の StateNotifierProvider 経由で渡し、Widget 側は Flutter Hooks の useProvider を利用して取り出しています。
 
 具体的に見たほうがわかりやすいので、順番に見ていきたいと思います。
 
-まずメインのTodoScreenです。Flutter Hooksを使用するためにHookWidgetを継承しています。
+まずメインの TodoScreen です。Flutter Hooks を使用するために HookWidget を継承しています。
 
-useProviderがWidgetで状態を取得している箇所です。
+useProvider が Widget で状態を取得している箇所です。
 
 ```dart
 class TodoScreen extends HookWidget {
@@ -429,21 +532,21 @@ class TodoScreen extends HookWidget {
 }
 ```
 
-画面にはStateNotifier定義されたtodoのstateがtodoProviderというので渡ってきています。
+画面には StateNotifier 定義された todo の state が todoProvider というので渡ってきています。
 
-todoProviderの定義は以下のとおりです。
+todoProvider の定義は以下のとおりです。
 
 ```dart
 final todoProvider = StateNotifierProvider.family<TodoController, AsyncValue<Todos>, String>(
     (ref, meId) => TodoController(ref, meId: meId));
 ```
 
-StateNotifierProviderはStateNotifierで管理されている状態の変更をWidgetに通知するための仕組みです。
-StateNotifierProiderについては公式のドキュメントの他に[こちらの記事](https://itome.team/blog/2020/05/flutter-state-notifier-provider)もわかりやすいです。
+StateNotifierProvider は StateNotifier で管理されている状態の変更を Widget に通知するための仕組みです。
+StateNotifierProider については公式のドキュメントの他に[こちらの記事](https://itome.team/blog/2020/05/flutter-state-notifier-provider)もわかりやすいです。
 
-stateを返すController(StateNotifier)側の実装は以下のようなイメージです。
+state を返す Controller(StateNotifier)側の実装は以下のようなイメージです。
 状態の取得と更新に関するメソッドが定義されています。
-それぞれのメソッドの中ではentityのメソッドを呼び出し、状態の更新を行ったり、バックエンドサーバーとの通信を行っています。
+それぞれのメソッドの中では entity のメソッドを呼び出し、状態の更新を行ったり、バックエンドサーバーとの通信を行っています。
 
 ```dart
 import 'package:riverpod/riverpod.dart';
@@ -529,13 +632,13 @@ class TodoController extends StateNotifier<AsyncValue<Todos>> {
 }
 ```
 
-StateNotifierはTodoRespositoryに依存しています。TodoRepositoryのinstanceの取得には、todoRepositoryProviderからProviderReferenceという他のProviderの内容を読む仕組みを経由して取得しています(ProviderReferenceの使用については[ドキュメント](https://pub.dev/documentation/riverpod/latest/riverpod/ProviderReference/read.html)や[このあたりのissue](https://github.com/rrousselGit/river_pod/issues/75#issuecomment-734522746)が参考になります) 。
+StateNotifier は TodoRespository に依存しています。TodoRepository の instance の取得には、todoRepositoryProvider から ProviderReference という他の Provider の内容を読む仕組みを経由して取得しています(ProviderReference の使用については[ドキュメント](https://pub.dev/documentation/riverpod/latest/riverpod/ProviderReference/read.html)や[このあたりの issue](https://github.com/rrousselGit/river_pod/issues/75#issuecomment-734522746)が参考になります) 。
 
-StateNotifierからの値の取り出しはすべて、stateプロパティ経由で取り出します。そのためstateの状態を変更するメソッドはすべてvoidで、直接戻り値を使用することはありません。Riverpodの0.14.0からは、明示的にstateプロパティを指定しなくても、useProvider経由で取得するだけでstateが取得されます。([issue](https://github.com/rrousselGit/river_pod/issues/341))
+StateNotifier からの値の取り出しはすべて、state プロパティ経由で取り出します。そのため state の状態を変更するメソッドはすべて void で、直接戻り値を使用することはありません。Riverpod の 0.14.0 からは、明示的に state プロパティを指定しなくても、useProvider 経由で取得するだけで state が取得されます。([issue](https://github.com/rrousselGit/river_pod/issues/341))
 
-非同期に取得するデータのStateNotifierの型は、Riverpodが提供している[AsyncValue]( https://pub.dev/documentation/riverpod/latest/riverpod/AsyncValue-class.html)で定義しています([参考にしたissueコメント](https://github.com/rrousselGit/river_pod/issues/240#issuecomment-742043781))。
+非同期に取得するデータの StateNotifier の型は、Riverpod が提供している[AsyncValue](https://pub.dev/documentation/riverpod/latest/riverpod/AsyncValue-class.html)で定義しています([参考にした issue コメント](https://github.com/rrousselGit/river_pod/issues/240#issuecomment-742043781))。
 
-これにより[whenメソッド](https://pub.dev/documentation/riverpod/latest/riverpod/AsyncValue/when.html)を使うことで非同期な状態がとるloading中、エラー時、data取得後のそれぞれの状態を直感的に定義できるようになる点です。以下のような感じで使えます。
+これにより[when メソッド](https://pub.dev/documentation/riverpod/latest/riverpod/AsyncValue/when.html)を使うことで非同期な状態がとる loading 中、エラー時、data 取得後のそれぞれの状態を直感的に定義できるようになる点です。以下のような感じで使えます。
 
 ```dart
 return todos.when(
@@ -548,20 +651,20 @@ return todos.when(
 );
 ```
 
-また状態取得のための最初のAPI呼び出しはControllerのコストラクタ内部で行っています。これにより、呼び出し側が明示的にAPIをcallするようなメソッドを呼び出す必要がなく、知るべきことが少なくなるメリットがあります。
+また状態取得のための最初の API 呼び出しは Controller のコストラクタ内部で行っています。これにより、呼び出し側が明示的に API を call するようなメソッドを呼び出す必要がなく、知るべきことが少なくなるメリットがあります。
 
-例えばコンストラクタ内部でAPI呼び出しをせずに以下のようなStateNotifierを定義した場合、以下のように呼び出し側で明示的に状態の取得を呼び出す必要があり、やや不自然な実装になります。(useMemoizedを使う理由はこのissue([1](https://github.com/rrousselGit/flutter_hooks/issues/119)、[2](https://github.com/rrousselGit/flutter_hooks/issues/132))で説明されています)
+例えばコンストラクタ内部で API 呼び出しをせずに以下のような StateNotifier を定義した場合、以下のように呼び出し側で明示的に状態の取得を呼び出す必要があり、やや不自然な実装になります。(useMemoized を使う理由はこの issue([1](https://github.com/rrousselGit/flutter_hooks/issues/119)、[2](https://github.com/rrousselGit/flutter_hooks/issues/132))で説明されています)
 
 ```dart
 class TodoController extends StateNotifier<Accident> {
   AccidentController(ProviderReference ref, {@required this.meId})
       : _ref = ref,
         super(null);
-  
+
   late TodoRepository _repository;
 
   final String meId;
-  
+
   final ProviderReference _ref;
 
   Stream<void> fetch() async* {
@@ -581,14 +684,14 @@ final todos = useProvider(todoProvider(meId));
 ...
 ```
 
-コンストラクタ内部でAPI呼び出しをするとuseProviderで呼び出すだけでよくなるので、よりシンプルな実装になります。
+コンストラクタ内部で API 呼び出しをすると useProvider で呼び出すだけでよくなるので、よりシンプルな実装になります。
 
 ```dart
 // TodoControllerのコンスタラクタの中でサーバーからの取得が行われる
 final accidentResult = useProvider(accidentProvider(meId));
 ```
 
-Todoの作成など状態の更新時はcontrollerのメソッドを呼び出します。
+Todo の作成など状態の更新時は controller のメソッドを呼び出します。
 以下のようなコードイメージです。
 
 ```dart
@@ -715,24 +818,23 @@ class TodoScreen extends HookWidget {
 
 # その他
 
-App State以外の箇所でもFlutter Hooksを使っていて、画面で一時的に必要な状態は、Flutter HooksのuseStateを使っています。
+App State 以外の箇所でも Flutter Hooks を使っていて、画面で一時的に必要な状態は、Flutter Hooks の useState を使っています。
 
-上記で解説したような状態管理手法のキャッチアップには、各ライブラリの公式ドキュメントやexampleを見るのが一番参考になりました。
+上記で解説したような状態管理手法のキャッチアップには、各ライブラリの公式ドキュメントや example を見るのが一番参考になりました。
 
-Hooksについてはライブラリの作者が React を参考にしているため、[React Hooksのドキュメント](https://ja.reactjs.org/docs/hooks-intro.html)を参考にするのがよいです。
+Hooks についてはライブラリの作者が React を参考にしているため、[React Hooks のドキュメント](https://ja.reactjs.org/docs/hooks-intro.html)を参考にするのがよいです。
 
-書いてから気づいたのですが、Riverpodを使ったTodoアプリのサンプルコードの例は割とちょこちょこネットでもあって、割とオーソドックスになりつつあるのかもしれません。
-サンプルコードだとAPI呼び出しをしている例があまり多くなかったり、ライブラリの組み合わせが少し違ったりもするので、そのあたりでなにか参考になればと思います。
+書いてから気づいたのですが、Riverpod を使った Todo アプリのサンプルコードの例は割とちょこちょこネットでもあって、割とオーソドックスになりつつあるのかもしれません。
+サンプルコードだと API 呼び出しをしている例があまり多くなかったり、ライブラリの組み合わせが少し違ったりもするので、そのあたりでなにか参考になればと思います。
 
 また、これ以外にもアプリの設計は色んなパターンがありえてこれ以外の例だと
 
 - [Flutter を MVVM で実装する](https://wasabeef.medium.com/flutter-%E3%82%92-mvvm-%E3%81%A7%E5%AE%9F%E8%A3%85%E3%81%99%E3%82%8B-861c5dbcc565)
 - [参考にした状態管理手法の記事中サンプル](https://github.com/mono0926/wdb106-flutter)
-- [Riverpodのexample](https://github.com/rrousselGit/river_pod/tree/master/examples)
+- [Riverpod の example](https://github.com/rrousselGit/river_pod/tree/master/examples)
 
 などがあります。
 
 絶対の正解はなくスタイルやアプリの規模によって適切な設計は変わってくると思うので、必要に応じてぜひこれらの例も参考にしてみてください。
 
-次回はNavigator2.0を用いた画面遷移の実装についてまとめます。
-
+次回は Navigator2.0 を用いた画面遷移の実装についてまとめます。
